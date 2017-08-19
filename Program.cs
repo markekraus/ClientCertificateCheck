@@ -18,9 +18,10 @@ namespace ClientCertificateCheck
     {
         public static void Main(string[] args)
         {
-            if (args.Count() != 2)
+            if (args.Count() != 3)
             {
-                return;
+                System.Console.WriteLine("Required: <CertificatePath> <CertificatePassword> <PortNumber>");  
+                Environment.Exit(1); 
             }
             BuildWebHost(args).Run();
         }
@@ -30,16 +31,15 @@ namespace ClientCertificateCheck
                 .UseStartup<Startup>()
                 .UseKestrel(options =>
                 {
-                   options.Listen(IPAddress.Loopback, 8443, listenOptions =>
+                   options.Listen(IPAddress.Any, int.Parse(args[2]), listenOptions =>
                    {
                        var certificate = new X509Certificate2(args[0], args[1]);
                        HttpsConnectionAdapterOptions httpsOption = new HttpsConnectionAdapterOptions();
-                       httpsOption.SslProtocols = SslProtocols.Tls;
+                       httpsOption.SslProtocols = SslProtocols.Tls12;
                        httpsOption.ClientCertificateMode = ClientCertificateMode.AllowCertificate;
                        httpsOption.ClientCertificateValidation = (inCertificate, inChain, inPolicy) => {return true;};
                        httpsOption.CheckCertificateRevocation = false;
                        httpsOption.ServerCertificate = certificate;
-                       //listenOptions.UseHttps("ServerCert.pfx","password");
                        listenOptions.UseHttps(httpsOption);
                        
                    });
